@@ -1,4 +1,4 @@
-pentools
+Pentools
 ========
 
-Pentesting tools
+Pentesting tools by ky0p.
