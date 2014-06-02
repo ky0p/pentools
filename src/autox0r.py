@@ -53,5 +53,4 @@ encoded_result = str2ByteArray(str(result))
 print result
 print encoded_result
 
-
 sys.exit(0)
