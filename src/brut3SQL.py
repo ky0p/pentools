@@ -51,7 +51,7 @@ if (md5==1):
     print u"[>>] Using MD5 mode..."
 	    currentCar=48 # MD5 BF Start (48 -> 0)
 	    asciiEnd=102 # MD5 BF End (102 -> f)
-		totalLenght=32 #MD5's 32 bytes long
+	    totalLenght=32 #MD5's 32 bytes long
 
 while(found==0 and currentCar<asciiEnd):
 	  if (md5==1 and currentCar==58):
